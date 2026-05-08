@@ -1,11 +1,32 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MdAlternateEmail } from "react-icons/md";
 import { HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { FaArrowRight } from "react-icons/fa6";
 import { useState } from 'react';
+import { useUser } from '../contexts/useUser';
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate()
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const {loading,handleLogin}=useUser()
+  const handleSubmit =async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try{
+      await handleLogin({email,password})
+      navigate("/")
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  if(loading){
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#05070a]">
@@ -62,13 +83,15 @@ const SignIn = () => {
           <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-400/50"></div>
           <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400/50"></div>
 
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label className="block text-[10px] font-orbitron text-cyan-400/60 tracking-widest uppercase mb-2">Identity Hash</label>
               <div className="relative">
                 <MdAlternateEmail className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400/60" size={18} />
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e)=>{setEmail(e.target.value)}}
                   placeholder="user@aj-x.core"
                   className="w-full input-cyber pl-12 font-rajdhani text-lg"
                 />
@@ -81,6 +104,8 @@ const SignIn = () => {
                 <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400/60" size={18} />
                 <input
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e)=>{setPassword(e.target.value)}}
                   placeholder="••••••••••••"
                   className="w-full input-cyber pl-12 pr-12 font-rajdhani text-lg"
                 />

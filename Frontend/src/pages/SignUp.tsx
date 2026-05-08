@@ -1,13 +1,37 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineFingerPrint, HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { MdAlternateEmail } from "react-icons/md";
 import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { BsLightningCharge } from "react-icons/bs";
 import { PiGraphLight } from "react-icons/pi";
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {useUser} from "../contexts/useUser"
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate()
+
+  const {loading,handleSignUp}=useUser()
+
+  const handleSubmit = async (e:React.FormEvent<HTMLFormElement>)=>{
+    e.preventDefault()
+    try{
+      await handleSignUp({name,email,password})
+      navigate("/")
+    }catch(err){
+      console.log(err)
+    }
+
+  }
+
+  if(loading){
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#05070a] text-white flex flex-col ">
@@ -58,7 +82,7 @@ const SignUp = () => {
               <p className="text-white/40 text-sm font-rajdhani">Configure your identity parameters to begin neural integration.</p>
             </div>
 
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <div className="flex justify-between mb-2">
                   <label className="text-[10px] font-orbitron text-cyan-400/60 tracking-widest uppercase">Entity Designation</label>
@@ -66,7 +90,7 @@ const SignUp = () => {
                 </div>
                 <div className="relative">
                   <HiOutlineFingerPrint className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400/60" size={20} />
-                  <input type="text" placeholder="Enter Full Name" className="w-full input-cyber pl-12 font-rajdhani text-lg" />
+                  <input type="text" value={name} onChange={(e)=>{setName(e.target.value)}} placeholder="Enter Full Name" className="w-full input-cyber pl-12 font-rajdhani text-lg" />
                 </div>
               </div>
 
@@ -77,7 +101,7 @@ const SignUp = () => {
                 </div>
                 <div className="relative">
                   <MdAlternateEmail className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400/60" size={18} />
-                  <input type="email" placeholder="user@neural_net.com" className="w-full input-cyber pl-12 font-rajdhani text-lg" />
+                  <input type="email" value={email} onChange={(e)=>{setEmail(e.target.value)}} placeholder="user@neural_net.com" className="w-full input-cyber pl-12 font-rajdhani text-lg" />
                 </div>
               </div>
 
@@ -90,6 +114,8 @@ const SignUp = () => {
                   <IoShieldCheckmarkOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400/60" size={18} />
                   <input
                     type={showPassword ? "text" : "password"}
+                    onChange={(e)=>{setPassword(e.target.value)}}
+                    value={password}
                     placeholder="••••••••••••"
                     className="w-full input-cyber pl-12 pr-12 font-rajdhani text-lg"
                   />
