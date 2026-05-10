@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MdAlternateEmail } from "react-icons/md";
 import { HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { FaArrowRight } from "react-icons/fa6";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '../contexts/useUser';
 
 const SignIn = () => {
@@ -13,7 +13,14 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const {loading,handleLogin}=useUser()
+  const {user, loading,handleLogin}=useUser()
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
+
   const handleSubmit =async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try{

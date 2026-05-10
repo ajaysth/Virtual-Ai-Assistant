@@ -52,4 +52,15 @@ const logout = async ()=>{
         console.log(err)
     }
 }
-export {signUp, login, logout}
+
+const getMe = async ()=>{
+    try{
+        const response = await api.get("/api/auth/getme")
+
+        return response.data
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export {signUp, login, logout, getMe}

@@ -4,7 +4,7 @@ import { MdAlternateEmail } from "react-icons/md";
 import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { BsLightningCharge } from "react-icons/bs";
 import { PiGraphLight } from "react-icons/pi";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {useUser} from "../contexts/useUser"
 
 const SignUp = () => {
@@ -16,7 +16,13 @@ const SignUp = () => {
 
   const navigate = useNavigate()
 
-  const {loading,handleSignUp}=useUser()
+  const {user, loading,handleSignUp}=useUser()
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
 
   const handleSubmit = async (e:React.FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
