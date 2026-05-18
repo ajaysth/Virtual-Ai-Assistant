@@ -28,7 +28,7 @@ const SignUp = () => {
     e.preventDefault()
     try{
       await handleSignUp({name,email,password})
-      navigate("/")
+      navigate("/customize")
     }catch(err){
       console.log(err)
     }

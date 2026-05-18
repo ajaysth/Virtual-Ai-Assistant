@@ -12,7 +12,7 @@ export const useUser = () =>{
         throw new Error('useUser must be used within a UserContextProvider')
     }
 
-    const {user,setUser,loading,setLoading} = context
+    const {user,setUser,loading,setLoading,frontendImage,backendImage,selectedImage,setBackendImage,setFrontendImage,setSelectedImage} = context
 
     const handleSignUp = async ({name,email,password}:SignupProps)=>{
         try{
@@ -54,6 +54,9 @@ export const useUser = () =>{
         }
     }
 
+
+
+
     useEffect(()=>{
         const getAndSetUser = async ()=>{
             try{
@@ -82,7 +85,14 @@ export const useUser = () =>{
         setLoading,
         handleSignUp,
         handleLogin,
-        handleLogout
+        handleLogout,
+        frontendImage,
+        setFrontendImage,
+        backendImage,
+        setBackendImage,
+        selectedImage,
+        setSelectedImage
+        
     }
     
 
