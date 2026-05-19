@@ -15,7 +15,7 @@ const Customize2 = () => {
 
     const handleUpdateAssistant = async () => {
         try {
-            let formData = new FormData()
+            const formData = new FormData()
             formData.append("assistantName", assistantName)
             if (backendImage) {
                 formData.append("assistantImage", backendImage)
