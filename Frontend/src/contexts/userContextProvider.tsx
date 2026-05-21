@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import {UserContext} from './userContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { UserContext } from './userContext';
 import { getMe } from '../api/auth/auth.api';
+import axios from 'axios';
 
-interface User{
+interface User {
     id: string,
     name: string,
     email: string,
@@ -10,7 +11,14 @@ interface User{
     assistantImage?: string
 }
 
-export const  UserContextProvider = ({ children }: { children: React.ReactNode })=> {
+declare global {
+    interface Window {
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
+    }
+}
+
+export const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
 
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -18,9 +26,24 @@ export const  UserContextProvider = ({ children }: { children: React.ReactNode }
     const [backendImage, setBackendImage] = React.useState<string | null>(null)
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-    useEffect(()=>{
-        const getAndSetUser = async ()=>{
-            try{
+    // Keep a reference to the latest user state to avoid stale closure inside speech recognition
+    const userRef = useRef<User | null>(user);
+    useEffect(() => {
+        userRef.current = user;
+    }, [user]);
+
+    const geminiResponse = async (command: string) => {
+        try {
+            const response = await axios.post("http://localhost:5000/api/user/asktoassistant", { command }, { withCredentials: true })
+            return response.data
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    useEffect(() => {
+        const getAndSetUser = async () => {
+            try {
                 setLoading(true)
                 const data = await getMe()
                 if (data && data.user) {
@@ -28,18 +51,55 @@ export const  UserContextProvider = ({ children }: { children: React.ReactNode }
                 } else {
                     setUser(null)
                 }
-            }catch(err){
+            } catch (err) {
                 console.log(err)
                 setUser(null)
-            }finally{
+            } finally {
                 setLoading(false)
             }
         }
 
         getAndSetUser()
-    },[])
+    }, [])
 
-    const value ={
+
+    useEffect(() => {
+        const SpeechRecognitionClass =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognitionClass) {
+            console.log("Speech Recognition not supported");
+            return;
+        }
+
+        const recognition = new SpeechRecognitionClass();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        recognition.onresult = async (event: any) => {
+            const result = event.results[event.results.length - 1];
+            if (!result.isFinal) return; // Only process when the user has finished speaking a phrase
+
+            const transcript = result[0].transcript.trim();
+
+            console.log(transcript)
+            const assistantName = userRef.current?.assistantName?.toLowerCase() || "assistant";
+            if (transcript.toLowerCase().includes(assistantName)) {
+                const data = await geminiResponse(transcript)
+                console.log("response", data)
+            }
+        }
+
+        recognition.start();
+
+        return () => {
+            recognition.stop();
+        };
+
+    }, [])
+
+    const value = {
         user,
         setUser,
         loading,
@@ -49,7 +109,8 @@ export const  UserContextProvider = ({ children }: { children: React.ReactNode }
         backendImage,
         setBackendImage,
         selectedImage,
-        setSelectedImage
+        setSelectedImage,
+        geminiResponse
     }
 
     return (

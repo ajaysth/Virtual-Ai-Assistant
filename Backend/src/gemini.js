@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const geminiResponse = async (command, assistantName, userName) => {
-  if (!prompt) {
+  if (!command) {
     return { error: "Prompt query parameter is required" };
   }
 
@@ -66,10 +66,9 @@ const geminiResponse = async (command, assistantName, userName) => {
     return response.data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error("Gemini API Error:", error.response?.data || error.message);
-    return {
-      error: "Failed to fetch response from Gemini",
-      details: error.response?.data || error.message,
-    };
+    throw new Error(
+      `Gemini API Error: ${error.response?.data?.error?.message || error.message}`,
+    );
   }
 };
 
