@@ -35,10 +35,53 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
     const geminiResponse = async (command: string) => {
         try {
             const response = await axios.post("http://localhost:5000/api/user/asktoassistant", { command }, { withCredentials: true })
+            if (response.data) {
+                speak(response.data.response)
+            }
             return response.data
         } catch (err) {
             console.log(err)
         }
+    }
+
+    const speak = (text: string) => {
+        const synth = window.speechSynthesis;
+        synth.cancel();
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.voice = window.speechSynthesis.getVoices().find(voice => voice.name === "Google US English") || null;
+        speech.pitch = 1;
+        speech.rate = 1;
+        window.speechSynthesis.speak(speech);
+    }
+
+    const handleCommand = (data) => {
+        if (!data) return;
+        const { type, userInput, response } = data
+        speak(response)
+
+        if (type === "google-search") {
+            const query = encodeURIComponent(userInput)
+            window.open(`https://www.google.com/search?q=${query}`)
+        }
+        else if (type === "youtube-search") {
+            const query = encodeURIComponent(userInput)
+            window.open(`https://www.youtube.com/results?search_query=${query}`)
+        }
+        else if (type === "youtube-play") {
+            const query = encodeURIComponent(userInput)
+            window.open(`https://www.youtube.com/watch?v=${query}`)
+        }
+        else if (type === "open-instagram") {
+            window.open(`https://www.instagram.com/`)
+        }
+        else if (type === "open-facebook") {
+            window.open(`https://www.facebook.com/`)
+        }
+
+        else {
+            speak(response)
+        }
+
     }
 
     useEffect(() => {
@@ -88,6 +131,11 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
             if (transcript.toLowerCase().includes(assistantName)) {
                 const data = await geminiResponse(transcript)
                 console.log("response", data)
+                if (data) {
+                    handleCommand(data)
+                } else {
+                    speak("Sorry, I encountered an error. Please try again.")
+                }
             }
         }
 

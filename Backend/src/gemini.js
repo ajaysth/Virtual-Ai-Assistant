@@ -16,9 +16,9 @@ const geminiResponse = async (command, assistantName, userName) => {
     
     Your task is to understand the user's matural language input and respond with a json object like this:
     {
-  "type": "general" | "google_search" | "youtube_search" | "youtube_play" | 
-          "get_time" | "get_date" | "get_day" | "get_month" | "calculator_open" | 
-          "instagram_open" | "facebook_open" | "weather_show",
+  "type": "general" | "google-search" | "youtube-search" | "youtube-play" | 
+          "get-time" | "get-date" | "get-day" | "get-month" | "calculator-open" | 
+          "instagram-open" | "facebook-open" | "weather-show",
 
   "userinput": "<original user input> (only remove your name from userinput if it exists). If the user asks to search on Google or YouTube, only include the search query text here.",
 
@@ -32,17 +32,17 @@ const geminiResponse = async (command, assistantName, userName) => {
 
   Type meanings:
   -general:for casual chitchats, greetings, questions not covered by other types.
-  -google_search:for queries that require a web search.
-  -youtube_search:for queries asking to search on YouTube.
-  -youtube_play:for queries asking to play a YouTube video.
-  -get_time:for queries asking for the current time.
-  -get_date:for queries asking for the current date.
-  -get_day:for queries asking for the current day of the week.
-  -get_month:for queries asking for the current month.
-  -calculator_open:for queries asking to open the calculator app.
-  -instagram_open:for queries asking to open Instagram.
-  -facebook_open:for queries asking to open Facebook.
-  -weather_show:for queries asking for the weather forecast.
+  -google-search:for queries that require a web search.
+  -youtube-search:for queries asking to search on YouTube.
+  -youtube-play:for queries asking to play a YouTube video.
+  -get-time:for queries asking for the current time.
+  -get-date:for queries asking for the current date.
+  -get-day:for queries asking for the current day of the week.
+  -get-month:for queries asking for the current month.
+  -calculator-open:for queries asking to open the calculator app.
+  -instagram-open:for queries asking to open Instagram.
+  -facebook-open:for queries asking to open Facebook.
+  -weather-show:for queries asking for the weather forecast.
 
   Important:
   -always respond in json format.
