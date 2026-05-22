@@ -17,7 +17,10 @@ interface UserContext{
     backendImage: string | null,
     setBackendImage: React.Dispatch<React.SetStateAction<string | null>>,
     selectedImage: string | null,
-    setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>
+    setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>,
+    geminiResponse: (command: string) => Promise<any>,
+    listening: boolean,
+    speaking: boolean
 }
 
 export const UserContext = createContext<UserContext | null>(null)

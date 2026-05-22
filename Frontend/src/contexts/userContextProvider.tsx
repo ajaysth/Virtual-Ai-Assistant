@@ -26,6 +26,13 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
     const [backendImage, setBackendImage] = React.useState<string | null>(null)
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+    const [listening, setListening] = useState<boolean>(false);
+    const [speaking, setSpeaking] = useState<boolean>(false);
+    const isSpeaking = useRef<boolean>(false);
+    const isProcessing = useRef<boolean>(false);
+    const recognitionRef = useRef<any>(null);
+    const synth = window.speechSynthesis;
+
     // Keep a reference to the latest user state to avoid stale closure inside speech recognition
     const userRef = useRef<User | null>(user);
     useEffect(() => {
@@ -45,13 +52,44 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
     }
 
     const speak = (text: string) => {
-        const synth = window.speechSynthesis;
+        isSpeaking.current = true; // Synchronously block recognition to avoid race conditions
+        setSpeaking(true);
         synth.cancel();
         const speech = new SpeechSynthesisUtterance(text);
         speech.voice = window.speechSynthesis.getVoices().find(voice => voice.name === "Google US English") || null;
         speech.pitch = 1;
         speech.rate = 1;
-        window.speechSynthesis.speak(speech);
+
+        speech.onstart = () => {
+            isSpeaking.current = true;
+            setSpeaking(true);
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {
+                    console.error("Error stopping recognition on speech start:", e);
+                }
+            }
+        };
+
+        const handleSpeechEnd = () => {
+            isSpeaking.current = false;
+            setSpeaking(false);
+            setTimeout(() => {
+                if (!isSpeaking.current && !isProcessing.current && recognitionRef.current) {
+                    try {
+                        recognitionRef.current.start();
+                    } catch (e) {
+                        console.error("Error starting recognition after speech end:", e);
+                    }
+                }
+            }, 300);
+        };
+
+        speech.onend = handleSpeechEnd;
+        speech.onerror = handleSpeechEnd;
+
+        synth.speak(speech);
     }
 
     const handleCommand = (data) => {
@@ -116,35 +154,110 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
         }
 
         const recognition = new SpeechRecognitionClass();
-
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
+
+        recognitionRef.current = recognition;
+        const isRecognizingRef = { current: false };
+        const hasPermissionError = { current: false };
+        let isMounted = true;
+
+        const safeRecognition = () => {
+            if (
+                isMounted &&
+                !isSpeaking.current &&
+                !isRecognizingRef.current &&
+                !isProcessing.current &&
+                !hasPermissionError.current
+            ) {
+                try {
+                    recognition.start();
+                    console.log("Speech recognition started");
+                } catch (error) {
+                    console.error("Failed to start speech recognition:", error);
+                }
+            }
+        };
+
+        recognition.onstart = () => {
+            isRecognizingRef.current = true;
+            console.log("Speech recognition started");
+            if (isMounted) {
+                setListening(true);
+            }
+        };
+
+        recognition.onend = () => {
+            isRecognizingRef.current = false;
+            console.log("Speech recognition ended");
+            if (isMounted) {
+                setListening(false);
+                safeRecognition();
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("Speech recognition error:", event.error);
+            isRecognizingRef.current = false;
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                hasPermissionError.current = true;
+            }
+        };
+
         recognition.onresult = async (event: any) => {
             const result = event.results[event.results.length - 1];
             if (!result.isFinal) return; // Only process when the user has finished speaking a phrase
 
             const transcript = result[0].transcript.trim();
+            console.log("Transcript:", transcript);
 
-            console.log(transcript)
             const assistantName = userRef.current?.assistantName?.toLowerCase() || "assistant";
             if (transcript.toLowerCase().includes(assistantName)) {
-                const data = await geminiResponse(transcript)
-                console.log("response", data)
-                if (data) {
-                    handleCommand(data)
-                } else {
-                    speak("Sorry, I encountered an error. Please try again.")
+                isProcessing.current = true;
+                if (recognitionRef.current) {
+                    try {
+                        recognitionRef.current.stop();
+                    } catch (e) {
+                        console.error("Error stopping recognition on processing trigger:", e);
+                    }
+                }
+
+                try {
+                    const data = await geminiResponse(transcript);
+                    console.log("response", data);
+                    if (data) {
+                        handleCommand(data);
+                    } else {
+                        speak("Sorry, I encountered an error. Please try again.");
+                    }
+                } catch (error) {
+                    console.error("Error handling speech query:", error);
+                    speak("Sorry, I encountered an error. Please try again.");
+                } finally {
+                    isProcessing.current = false;
+                    if (isMounted) {
+                        setTimeout(() => {
+                            safeRecognition();
+                        }, 100);
+                    }
                 }
             }
-        }
-
-        recognition.start();
-
-        return () => {
-            recognition.stop();
         };
 
+        // Start recognition safely
+        safeRecognition();
+
+        return () => {
+            isMounted = false;
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {
+                    console.error("Error during recognition cleanup:", e);
+                }
+            }
+        };
     }, [])
 
     const value = {
@@ -158,7 +271,9 @@ export const UserContextProvider = ({ children }: { children: React.ReactNode })
         setBackendImage,
         selectedImage,
         setSelectedImage,
-        geminiResponse
+        geminiResponse,
+        listening,
+        speaking
     }
 
     return (

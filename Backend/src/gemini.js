@@ -18,7 +18,7 @@ const geminiResponse = async (command, assistantName, userName) => {
     {
   "type": "general" | "google-search" | "youtube-search" | "youtube-play" | 
           "get-time" | "get-date" | "get-day" | "get-month" | "calculator-open" | 
-          "instagram-open" | "facebook-open" | "weather-show",
+          "open-instagram" | "open-facebook" | "get-weather",
 
   "userinput": "<original user input> (only remove your name from userinput if it exists). If the user asks to search on Google or YouTube, only include the search query text here.",
 
@@ -40,9 +40,9 @@ const geminiResponse = async (command, assistantName, userName) => {
   -get-day:for queries asking for the current day of the week.
   -get-month:for queries asking for the current month.
   -calculator-open:for queries asking to open the calculator app.
-  -instagram-open:for queries asking to open Instagram.
-  -facebook-open:for queries asking to open Facebook.
-  -weather-show:for queries asking for the weather forecast.
+  -open-instagram:for queries asking to open Instagram.
+  -open-facebook:for queries asking to open Facebook.
+  -get-weather:for queries asking for the weather forecast.
 
   Important:
   -always respond in json format.
